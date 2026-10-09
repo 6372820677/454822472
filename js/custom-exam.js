@@ -953,32 +953,7 @@ function getDragAfterElement(container, y) {
   ).element;
 }
 
-// 验证和格式化时间
-function validateAndFormatTime(timeString) {
-  if (!timeString || !timeString.trim()) {
-    return null;
-  }
-
-  const timePattern = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
-  if (timePattern.test(timeString)) {
-    // 格式化时间（确保小时和分钟都是两位数）
-    const [hours, minutes] = timeString.split(":");
-    return `${parseInt(hours).toString().padStart(2, "0")}:${parseInt(minutes).toString().padStart(2, "0")}`;
-  }
-
-  // 尝试修复格式
-  const numbers = timeString.replace(/[^\d]/g, "");
-  if (numbers.length >= 2) {
-    const hours = parseInt(numbers.substring(0, 2));
-    const minutes = numbers.length >= 4 ? parseInt(numbers.substring(2, 4)) : 0;
-
-    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-    }
-  }
-
-  return null;
-}
+// 验证和格式化时间已抽离到 js/exam-core.js，便于在 Node.js 中进行单元测试
 
 // 删除考试环节
 function removeSection(button) {
@@ -1027,6 +1002,13 @@ function saveCustomExam() {
 
   for (let i = 0; i < sectionRows.length; i++) {
     const row = sectionRows[i];
+
+    // 跳过自动附加的"考试结束"占位行：它时长为 0 且不可编辑，
+    // 不参与表单校验，也不计入总时间（首页会统一生成考试结束环节）
+    if (row.classList.contains("end-section-card")) {
+      continue;
+    }
+
     const name = row.querySelector(".section-name").value;
     const duration = parseInt(row.querySelector(".section-duration").value);
     let description = row.querySelector(".section-description").value;
@@ -1513,6 +1495,13 @@ function applyCustomExam() {
   // 验证并收集环节信息
   for (let i = 0; i < sectionRows.length; i++) {
     const row = sectionRows[i];
+
+    // 跳过自动附加的"考试结束"占位行：它时长为 0 且不可编辑，
+    // 不参与表单校验，也不计入总时间（首页会统一生成考试结束环节）
+    if (row.classList.contains("end-section-card")) {
+      continue;
+    }
+
     const name = row.querySelector(".section-name").value;
     const duration = parseInt(row.querySelector(".section-duration").value);
     let description = row.querySelector(".section-description").value;
